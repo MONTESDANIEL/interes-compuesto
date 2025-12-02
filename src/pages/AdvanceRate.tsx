@@ -2,29 +2,57 @@ import React, { useState } from "react";
 import CustomInput from "../components/CustomInput";
 import ResultCard from "../components/ResultCard";
 import { ArrowRight } from "lucide-react";
+import Dropdown from "../components/Dropdown";
 
 const TasaAnticipada: React.FC = () => {
   const [tipoConversion, setTipoConversion] = useState("normal-a-anticipada");
+  const [tipoPeriodoOrigen, setTipoPeriodoOrigen] = useState("");
+  const [tipoPeriodoDestino, setTipoPeriodoDestino] = useState("");
   const [tasa, setTasa] = useState("");
   const [resultado, setResultado] = useState<string | null>(null);
 
+  const convertirTasa = (
+    tasaConocida: number,
+    periodoOrigen: number,
+    periodoDestino: number
+  ): number => {
+    const nOrigen = periodoOrigen;
+    const nDestino = periodoDestino;
+
+    if (!nOrigen || !nDestino) throw new Error("Periodicidad desconocida");
+
+    return Math.pow(1 + tasaConocida, nOrigen / nDestino) - 1;
+  };
+
   const calcular = () => {
-    const value = Number(tasa) / 100;
-    if (!value) {
-      alert("Ingresa una tasa válida");
+    const tasaNum = Number(tasa) / 100;
+    const tipoPeriodoOrigenNum = Number(tipoPeriodoOrigen);
+    const tipoPeriodoDestinoNum = Number(tipoPeriodoDestino);
+
+    if (!tasaNum || !tipoPeriodoDestinoNum || !tipoPeriodoOrigenNum) {
+      alert("Completa todos los campos correctamente");
       return;
     }
 
+    let tasaPorPeriodoFinal = tasaNum;
     let result = 0;
 
+    console.log(tasaPorPeriodoFinal);
+
+    if (tipoPeriodoOrigenNum !== tipoPeriodoDestinoNum) {
+      tasaPorPeriodoFinal = convertirTasa(
+        tasaPorPeriodoFinal,
+        tipoPeriodoOrigenNum,
+        tipoPeriodoDestinoNum
+      );
+    }
+
+    console.log(tasaPorPeriodoFinal);
+
     if (tipoConversion === "normal-a-anticipada") {
-      result = value / (1 + value);
+      result = tasaPorPeriodoFinal / (1 + tasaPorPeriodoFinal);
     } else {
-      if (value >= 1) {
-        alert("La tasa anticipada debe ser menor al 100%");
-        return;
-      }
-      result = value / (1 - value);
+      result = tasaPorPeriodoFinal / (1 - tasaPorPeriodoFinal);
     }
 
     setResultado((result * 100).toFixed(6));
@@ -50,12 +78,15 @@ const TasaAnticipada: React.FC = () => {
             {/* CARD: Normal → Anticipada */}
             <button
               type="button"
-              onClick={() => setTipoConversion("normal-a-anticipada")}
+              onClick={() => {
+                setTipoConversion("normal-a-anticipada");
+                setResultado(null);
+              }}
               className={`p-6 rounded-xl border transition-all duration-300 text-left
               ${
                 tipoConversion === "normal-a-anticipada"
                   ? "border-primary bg-primary/15 shadow-lg"
-                  : "border-neutral-700 bg-neutral-800 hover:bg-neutral-700/50"
+                  : "border-neutral-700 bg-neutral-800 hover:bg-neutral-700/50 cursor-pointer"
               }`}
             >
               <div className="flex items-center gap-1 mb-2">
@@ -77,12 +108,15 @@ const TasaAnticipada: React.FC = () => {
             {/* CARD: Anticipada → Normal */}
             <button
               type="button"
-              onClick={() => setTipoConversion("anticipada-a-normal")}
+              onClick={() => {
+                setTipoConversion("anticipada-a-normal");
+                setResultado(null);
+              }}
               className={`p-6 rounded-xl border transition-all duration-300 text-left
               ${
                 tipoConversion === "anticipada-a-normal"
                   ? "border-primary bg-primary/15 shadow-lg"
-                  : "border-neutral-700 bg-neutral-800 hover:bg-neutral-700/50"
+                  : "border-neutral-700 bg-neutral-800 hover:bg-neutral-700/50 cursor-pointer"
               }`}
             >
               <div className="flex items-center gap-1 mb-2">
@@ -99,23 +133,52 @@ const TasaAnticipada: React.FC = () => {
                 Convierte una tasa anticipada a una tasa normal o vencida.
               </p>
             </button>
-          </div>
 
-          <CustomInput value={tasa} placeholder="Tasa (%)" onChange={setTasa} />
-
-          <div className="flex gap-4">
-            <button
-              onClick={calcular}
-              className="flex-1 py-3 rounded-lg bg-primary text-white font-semibold hover:bg-dark transition-colors duration-300"
-            >
-              Calcular
-            </button>
-
+            <Dropdown
+              label="Tipo de período origen"
+              value={tipoPeriodoOrigen}
+              onChange={setTipoPeriodoOrigen}
+              options={[
+                { label: "Mensual", value: "12" },
+                { label: "Bimestral", value: "6" },
+                { label: "Trimestral", value: "4" },
+                { label: "Cuatrimestral", value: "3" },
+                { label: "Semestral", value: "2" },
+                { label: "Anual", value: "1" },
+              ]}
+            />
+            <Dropdown
+              label="Tipo de período destino"
+              value={tipoPeriodoDestino}
+              onChange={setTipoPeriodoDestino}
+              options={[
+                { label: "Mensual", value: "12" },
+                { label: "Bimestral", value: "6" },
+                { label: "Trimestral", value: "4" },
+                { label: "Cuatrimestral", value: "3" },
+                { label: "Semestral", value: "2" },
+                { label: "Anual", value: "1" },
+              ]}
+            />
+            <CustomInput
+              value={tasa}
+              placeholder="Tasa (%)"
+              onChange={setTasa}
+            />
             <button
               onClick={limpiar}
               className="flex-1 py-3 rounded-lg bg-neutral-600 text-neutral-300 hover:bg-neutral-700 transition-colors duration-300"
             >
               Limpiar
+            </button>
+          </div>
+
+          <div className="flex gap-4">
+            <button
+              onClick={calcular}
+              className="flex-1 py-3 rounded-lg bg-primary text-white font-semibold hover:bg-dark transition-colors duration-300 cursor-pointer"
+            >
+              Calcular
             </button>
           </div>
         </div>
