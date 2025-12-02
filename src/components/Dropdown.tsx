@@ -73,36 +73,32 @@ const Dropdown: React.FC<DropdownProps> = ({
         <AnimatePresence>
           {open && (
             <motion.div
-              initial={{ opacity: 0, y: -8 }}
+              initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
+              exit={{ opacity: 0, y: 4 }}
               transition={{ duration: 0.18 }}
-              className="
-                absolute left-0 right-0 mt-2 z-50
-                bg-neutral-700
-                rounded-xl shadow-xl
-                overflow-hidden
-                border border-neutral-600
-              "
+              className="absolute top-full w-full mt-2 z-50 bg-neutral-700 rounded-xl shadow-xl border border-neutral-600 overflow-hidden"
             >
-              {options.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => {
-                    onChange?.(opt.value);
-                    setOpen(false);
-                  }}
-                  className="
-                    w-full px-4 py-2 text-left 
-                    text-neutral-200
-                    hover:bg-neutral-600
-                    transition-all
-                    cursor-pointer
-                  "
-                >
-                  {opt.label}
-                </button>
-              ))}
+              <div className="overflow-y-auto h-full max-h-40 ">
+                {options.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => {
+                      onChange?.(opt.value);
+                      setOpen(false);
+                    }}
+                    className="
+                      w-full px-4 py-2 text-left
+                      text-neutral-200
+                      hover:bg-neutral-600
+                      transition-all
+                      cursor-pointer
+                    "
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
