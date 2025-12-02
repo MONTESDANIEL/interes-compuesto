@@ -60,6 +60,10 @@ export default function HomeEconomica() {
           <p className="text-xl opacity-90">
             Proyecto Final - Ingeniería Económica
           </p>
+          <p className="text-xl opacity-90">
+            Daniel Amaya Montes - Andres Felipe Rincon Ortiz - Jhoan Sebastian
+            Sua Garcia
+          </p>
         </div>
 
         {/* CARDS */}
