@@ -5,6 +5,6 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [tailwindcss(), react()],
   server: {
-    allowedHosts: ["web-calculator-production.up.railway.app"],
+    allowedHosts: ["interes-compuesto-production-ba57.up.railway.app"],
   },
 });
