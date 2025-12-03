@@ -145,6 +145,7 @@ const Annuities: React.FC = () => {
         periodicidadMesNum
       );
     }
+
     const anualidad = calcularAnualidadPresente(
       valorPresenteNum,
       tasaPorPeriodoFinal,

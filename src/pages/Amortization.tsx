@@ -13,81 +13,101 @@ export interface AmortizacionRow {
 }
 
 const Amortization: React.FC = () => {
-  const [tipoValor, setTipoValor] = useState("");
-  const [valor, setValor] = useState<string>("");
+  const [tipoValor, setTipoValor] = useState<"normal" | "anticipado" | "">("");
+  const [valorPresente, setValorPresente] = useState<string>("");
   const [tasa, setTasa] = useState<string>("");
-  const [periodos, setPeriodos] = useState<string>("");
-  const [periodoTipo, setPeriodoTipo] = useState("");
+  const [periodicidadMes, setPeriodicidadMes] = useState<string>("");
+  const [periodicidadTasa, setPeriodicidadTasa] = useState<string>("");
+  const [periodos, setPeriodos] = useState("");
+  const [tipoTasa, setTipoTasa] = useState<"efectiva" | "nominal" | "">("");
   const [tabla, setTabla] = useState<AmortizacionRow[]>([]);
 
+  const periodosPorAnoMap: Record<number, number> = {
+    1: 12,
+    2: 6,
+    3: 4,
+    4: 3,
+    6: 2,
+    12: 1,
+  };
+
+  const convertirTasa = (
+    tasaConocida: number,
+    periodoOrigen: number,
+    periodoDestino: number
+  ): number => {
+    const nOrigen = periodosPorAnoMap[periodoOrigen];
+    const nDestino = periodosPorAnoMap[periodoDestino];
+
+    if (!nOrigen || !nDestino) throw new Error("Periodicidad desconocida");
+
+    return Math.pow(1 + tasaConocida, nOrigen / nDestino) - 1;
+  };
+
+  const tasaNominalPorPeriodo = (
+    tasaAnual: number,
+    periodicidadNum: number
+  ): number => {
+    const periodosPorAno = periodosPorAnoMap[periodicidadNum];
+    if (!periodosPorAno) throw new Error("Periodicidad desconocida");
+
+    return tasaAnual / periodosPorAno;
+  };
+
   const calcular = () => {
-    if (!tipoValor || !valor || !tasa || !periodos || !periodoTipo) {
-      alert("Por favor completa todos los campos.");
-      return;
-    }
+    const tasaDecimalEntrada = Number(tasa) / 100;
+    const periodicidadTasaNum = Number(periodicidadTasa);
+    const periodicidadPagoNum = Number(periodicidadMes);
+    const numeroPeriodos = Number(periodos);
+    const valorPresenteNum = Number(valorPresente);
 
-    const valorNumerico = Number(valor);
-    const tasaNumerica = Number(tasa) / 100;
-    const periodosNumerico = Number(periodos);
-
-    if (
-      isNaN(valorNumerico) ||
-      isNaN(tasaNumerica) ||
-      isNaN(periodosNumerico)
-    ) {
-      alert("Por favor ingresa números válidos.");
-      return;
-    }
-
-    let cuota = 0;
-
-    console.log("Tasa numerica:", tasaNumerica);
-    console.log("Periodo numerica:", periodosNumerico);
-    console.log("Valor numerico:", valorNumerico);
-
-    if (tipoValor === "fv") {
-      cuota = Math.abs(
-        financial.pmt(tasaNumerica, periodosNumerico, 0, -valorNumerico)
+    let tasaPorPeriodoOrigen: number;
+    if (tipoTasa === "nominal") {
+      tasaPorPeriodoOrigen = tasaNominalPorPeriodo(
+        tasaDecimalEntrada,
+        periodicidadTasaNum
       );
-    } else if (tipoValor === "pv") {
-      cuota = Math.abs(
-        financial.pmt(tasaNumerica, periodosNumerico, -valorNumerico, 0)
-      );
+    } else {
+      tasaPorPeriodoOrigen = tasaDecimalEntrada;
     }
+
+    let tasaPorPeriodoFinal: number;
+    if (periodicidadTasaNum !== periodicidadPagoNum) {
+      tasaPorPeriodoFinal = convertirTasa(
+        tasaPorPeriodoOrigen,
+        periodicidadTasaNum,
+        periodicidadPagoNum
+      );
+    } else {
+      tasaPorPeriodoFinal = tasaPorPeriodoOrigen;
+    }
+
+    const cuota = Math.abs(
+      financial.pmt(tasaPorPeriodoFinal, numeroPeriodos, -valorPresenteNum, 0)
+    );
 
     const nuevaTabla: AmortizacionRow[] = [];
 
-    // -------------------------------------------------
-    // PERIODO 0 (estado inicial)
-    // -------------------------------------------------
     nuevaTabla.push({
       periodo: 0,
       cuota: 0,
       interes: 0,
       amortizacion: 0,
-      saldo: Number(valorNumerico.toFixed(2)),
+      saldo: Number(valorPresenteNum.toFixed(2)),
     });
 
-    // -------------------------------------------------
-    // ITERACIÓN NORMAL
-    // -------------------------------------------------
-    let saldo = valorNumerico;
+    let saldo = valorPresenteNum;
 
-    for (let i = 1; i <= periodosNumerico; i++) {
-      const interes = saldo * tasaNumerica;
-
-      // Calcular amortización (antes de ajustes)
+    for (let i = 1; i <= numeroPeriodos; i++) {
+      const interes = saldo * tasaPorPeriodoFinal;
       let amortizacion = cuota - interes;
 
-      // Ajustar si la amortización supera el saldo restante
       if (amortizacion > saldo) {
         amortizacion = saldo;
       }
 
       saldo -= amortizacion;
-
-      // Evitar valores negativos por redondeo
-      if (saldo < 0) saldo = 0;
+      if (saldo < 1e-8) saldo = 0;
 
       nuevaTabla.push({
         periodo: i,
@@ -107,11 +127,13 @@ const Amortization: React.FC = () => {
   };
 
   const clearForm = () => {
-    setTipoValor("");
-    setValor("");
+    setValorPresente("");
     setTasa("");
+    setPeriodicidadMes("");
+    setPeriodicidadTasa("");
     setPeriodos("");
-    setPeriodoTipo("");
+    setTipoValor("");
+    setTipoTasa("");
     setTabla([]);
   };
 
@@ -129,49 +151,62 @@ const Amortization: React.FC = () => {
 
           {/* GRID */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Dropdown
-              label="¿Qué valor estás ingresando?"
-              value={tipoValor}
-              onChange={setTipoValor}
-              options={[
-                { label: "Valor Presente (PV)", value: "pv" },
-                { label: "Valor Futuro (FV)", value: "fv" },
-              ]}
-            />
-
             <CustomInput
-              value={valor}
+              value={valorPresente}
               format="money"
-              placeholder={
-                tipoValor === "pv" ? "Valor Presente" : "Valor Futuro"
-              }
-              onChange={(raw) => setValor(raw)}
+              className="col-span-2"
+              placeholder={`Valor presente ${tipoValor ? tipoValor : ""}`}
+              onChange={setValorPresente}
             />
 
             <CustomInput
               value={periodos}
-              placeholder="Número de períodos"
-              onChange={(raw) => setPeriodos(raw)}
+              placeholder="Número de periodos"
+              onChange={setPeriodos}
             />
 
             <Dropdown
-              label="Tipo de período"
-              value={periodoTipo}
-              onChange={setPeriodoTipo}
+              label="Periodicidad de meses"
+              value={periodicidadMes}
+              onChange={setPeriodicidadMes}
               options={[
-                { label: "Mensual", value: "mensual" },
-                { label: "Bimestral", value: "bimestral" },
-                { label: "Trimestral", value: "trimestral" },
-                { label: "Cuatrimestral", value: "cuatrimestral" },
-                { label: "Semestral", value: "semestral" },
-                { label: "Anual", value: "anual" },
+                { label: "Mensual (M)", value: "1" },
+                { label: "Bimestral (B)", value: "2" },
+                { label: "Trimestral (T)", value: "3" },
+                { label: "Cuatrimestral (Q)", value: "4" },
+                { label: "Semestral (S)", value: "6" },
+                { label: "Anual (A)", value: "12" },
               ]}
             />
 
             <CustomInput
               value={tasa}
               placeholder="Tasa de Interés (%)"
-              onChange={(raw) => setTasa(raw)}
+              onChange={setTasa}
+            />
+
+            <Dropdown
+              label="Periodicidad de la tasa"
+              value={periodicidadTasa}
+              onChange={setPeriodicidadTasa}
+              options={[
+                { label: "Mensual (M)", value: "1" },
+                { label: "Bimestral (B)", value: "2" },
+                { label: "Trimestral (T)", value: "3" },
+                { label: "Cuatrimestral (Q)", value: "4" },
+                { label: "Semestral (S)", value: "6" },
+                { label: "Anual (A)", value: "12" },
+              ]}
+            />
+
+            <Dropdown
+              label="Tipo de tasa"
+              value={tipoTasa}
+              onChange={(value) => setTipoTasa(value as "efectiva" | "nominal")}
+              options={[
+                { label: "Efectiva", value: "efectiva" },
+                { label: "Nominal", value: "nominal" },
+              ]}
             />
 
             {/* BOTÓN LIMPIAR */}
