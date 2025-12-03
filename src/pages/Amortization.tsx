@@ -14,7 +14,6 @@ export interface AmortizacionRow {
 
 const Amortization: React.FC = () => {
   const [tipoValor, setTipoValor] = useState<"normal" | "anticipado" | "">("");
-  const [tableVisibility, setTableVisibility] = useState(false);
   const [valorPresente, setValorPresente] = useState<string>("");
   const [tasa, setTasa] = useState<string>("");
   const [periodicidadMes, setPeriodicidadMes] = useState<string>("");
@@ -125,7 +124,6 @@ const Amortization: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     calcular();
-    setTableVisibility(true);
   };
 
   const clearForm = () => {
@@ -137,7 +135,6 @@ const Amortization: React.FC = () => {
     setTipoValor("");
     setTipoTasa("");
     setTabla([]);
-    setTableVisibility(true);
   };
 
   return (
