@@ -14,6 +14,7 @@ export interface AmortizacionRow {
 
 const Amortization: React.FC = () => {
   const [tipoValor, setTipoValor] = useState<"normal" | "anticipado" | "">("");
+  const [tableVisibility, setTableVisibility] = useState(false);
   const [valorPresente, setValorPresente] = useState<string>("");
   const [tasa, setTasa] = useState<string>("");
   const [periodicidadMes, setPeriodicidadMes] = useState<string>("");
@@ -124,6 +125,7 @@ const Amortization: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     calcular();
+    setTableVisibility(true);
   };
 
   const clearForm = () => {
@@ -135,11 +137,12 @@ const Amortization: React.FC = () => {
     setTipoValor("");
     setTipoTasa("");
     setTabla([]);
+    setTableVisibility(true);
   };
 
   return (
-    <div className="min-h-screen bg-neutral-900 text-neutral-100 px-4">
-      <div className="max-w-6xl mx-auto flex flex-col gap-10 py-10">
+    <div className="flex justify-center items-center min-h-screen bg-neutral-900 text-neutral-100 p-5">
+      <div className="max-w-6xl mx-auto flex flex-col w-full gap-10">
         {/* TÍTULO */}
         <h1 className="text-4xl font-bold text-center text-primary">
           Amortización
@@ -228,11 +231,12 @@ const Amortization: React.FC = () => {
           </button>
         </div>
 
-        {/* TABLA */}
-        <div className="bg-neutral-800 border border-neutral-700 rounded-xl shadow-xl p-10">
-          <h1 className="text-2xl font-semibold mb-6">Tabla</h1>
-          <AmortizationTable tabla={tabla} />
-        </div>
+        {Array.isArray(tabla) && tabla.length > 0 && (
+          <div className="bg-neutral-800 border border-neutral-700 rounded-xl shadow-xl p-10">
+            <h1 className="text-2xl font-semibold mb-6">Tabla</h1>
+            <AmortizationTable tabla={tabla} />
+          </div>
+        )}
       </div>
     </div>
   );
