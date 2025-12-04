@@ -200,7 +200,7 @@ const PresentValue: React.FC = () => {
                   value={valorFuturo}
                   format="money"
                   placeholder="Valor Futuro"
-                  className="col-span-2"
+                  className="md:col-span-2"
                   onChange={setValorFuturo}
                 />
 
